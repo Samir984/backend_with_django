@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h1>User Registratiom form</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    
+    <!-- Display error messages -->
+    {% if form.errors %}
+        <div class="errors">
+            <ul>
+                {% for field in form %}
+                    {% if field.errors %}
+                        <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+                    {% endif %}
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <li>{{ form.non_field_errors|striptags }}</li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <button type="submit">Register</button>
+</form>
+{% endblock %}

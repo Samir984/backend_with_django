@@ -1,0 +1,12 @@
+{% extends 'layout.html' %}
+
+{% block title %}Create Poll{% endblock %}
+
+{% block content %}
+<h1>edit your Poll</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create Poll</button>
+</form>
+{% endblock %}

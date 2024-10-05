@@ -1,0 +1,128 @@
+{% extends 'layout.html' %} 
+{% block title %}Create Poll{% endblock %}
+
+{% block style %}
+<style>
+  .center {
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .poll-item {
+    margin: 20px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+  }
+
+  .poll-item:hover {
+    background-color: #f9f9f9;
+  }
+
+  .vote-button {
+    margin: 5px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+
+  .vote-button:hover {
+    background-color: #0056b3;
+  }
+
+  .vote-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="center">Welcome to Pollhub.</h1>
+
+<div class="polls">
+  <div class="poll">
+    {% for poll in polls %}
+ 
+    <div class="poll-item">
+  {% if user.id == poll.creater.id %}
+    <form method="post" action="{% url 'delete_poll' poll.id %}">
+        {% csrf_token %}
+
+    <button type="submit" >delete</button>
+    </form>
+    {% endif %}
+      <h2>{{ poll.question }}</h2>
+
+      <form method="POST" action="{% url 'vote' poll.id %}">
+        {% csrf_token %}
+        <button type="submit" class="vote-button" name="option" value="1">
+          {{ poll.option_1 }}
+        </button>
+           
+        <span>
+        {% for vote in votes %}
+            {% if vote.poll.id == poll.id %}
+            count: {{poll.vote_count_opt1}}
+            {%endif%}
+            {%endfor%}
+        </span>
+      </form>
+
+      <form method="POST" action="{% url 'vote' poll.id %}">
+        {% csrf_token %}
+        <button type="submit" class="vote-button" name="option" value="2">
+          {{ poll.option_2 }}
+        </button>
+        <span>
+        {% for vote in votes %}
+            {% if vote.poll.id == poll.id %}
+            count: {{poll.vote_count_opt2}}
+            {%endif%}
+            {%endfor%}
+        </span>
+      </form>
+
+      {% if poll.option_3 %}
+      <form method="POST" action="{% url 'vote' poll.id %}">
+        {% csrf_token %}
+        <button type="submit" class="vote-button" name="option" value="3">
+          {{ poll.option_3 }}
+        </button>
+        <span>
+            {% for vote in votes %}
+                {% if vote.poll.id == poll.id %}
+                count: {{poll.vote_count_opt3}}
+                {%endif%}
+                {%endfor%}
+            </span>
+      </form>
+      {% endif %}
+      {% if poll.option_4 %}
+      <form method="POST" action="{% url 'vote' poll.id %}">
+        {% csrf_token %}
+        <button type="submit" class="vote-button" name="option" value="4">
+          {{ poll.option_4 }}
+        </button>
+        <span>
+            {% for vote in votes %}
+                {% if vote.poll.id == poll.id %}
+                count: {{poll.vote_count_opt3}}
+                {%endif%}
+                {%endfor%}
+            </span>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
