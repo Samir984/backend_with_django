@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Poll, Vote
+from django.forms.models import model_to_dict
 from .forms import PollForm,UserRegisterForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
@@ -57,9 +58,12 @@ def edit_poll(request,poll_id):
 
 @login_required  
 def delete_poll(request, poll_id):
+    print(poll_id)
     if request.method == "POST":
         poll = get_object_or_404(Poll, pk=poll_id)
-        
+        print(poll)
+        poll.delete()
+          
        
     return redirect("/")
 
@@ -72,27 +76,48 @@ def vote(request, poll_id):
         option = int(request.POST.get('option'))
 
         # Check if the user has already voted on this poll
-        if Vote.objects.filter(user=user, poll=poll).exists():
-            messages.error(request, 'You have already voted.')
-            return redirect("/")  # Adjust redirect URL as needed
+        past_vote = Vote.objects.filter(user=user, poll=poll).first()
 
-        # Increment the appropriate vote count
-        if option == 1:
-            poll.vote_count_opt1 += 1
-        elif option == 2:
-            poll.vote_count_opt2 += 1
-        elif option == 3 and poll.option_3:  # Ensure option_3 exists
-            poll.vote_count_opt3 += 1
-        elif option == 4 and poll.option_4:  # Ensure option_4 exists
-            poll.vote_count_opt4 += 1
+        if past_vote is not None:
+            # User has already voted
+            previous_option = past_vote.selected_option
+            
+            if previous_option == option:
+                # User is unvoting by selecting the same option
+                past_vote.delete()  # Remove the previous vote
+                vote_count_attr = f'vote_count_opt{previous_option}'
+                if hasattr(poll, vote_count_attr):
+                    current_vote_count = getattr(poll, vote_count_attr)
+                    setattr(poll, vote_count_attr, current_vote_count - 1)  # Decrement the vote count
+            else:
+                # User is changing their vote
+                # Decrement the count for the previous option
+                previous_vote_count_attr = f'vote_count_opt{previous_option}'
+                if hasattr(poll, previous_vote_count_attr):
+                    previous_vote_count = getattr(poll, previous_vote_count_attr)
+                    setattr(poll, previous_vote_count_attr, previous_vote_count - 1)  # Decrement the previous option count
 
-        poll.save()
+                # Update the vote record with the new option
+                past_vote.selected_option = option
+                past_vote.save()  # Save the updated vote
 
-        # Create a Vote record
-        Vote.objects.create(user=user, poll=poll, selected_option=option)
+                # Increment the count for the new option
+                vote_count_attr = f'vote_count_opt{option}'
+                if hasattr(poll, vote_count_attr):
+                    current_vote_count = getattr(poll, vote_count_attr)
+                    setattr(poll, vote_count_attr, current_vote_count + 1)  # Increment the new option count
+        else:
+            # New vote
+            Vote.objects.create(user=user, poll=poll, selected_option=option)
+            vote_count_attr = f'vote_count_opt{option}'
+            if hasattr(poll, vote_count_attr):
+                current_vote_count = getattr(poll, vote_count_attr)
+                setattr(poll, vote_count_attr, current_vote_count + 1)  # Increment the selected option count
 
+        poll.save()  # Save the updated poll
         return redirect("/")
 
+    
 def register_view(request):   
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
